@@ -14,9 +14,15 @@ import requests
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import font_manager as fm
+import sys, os
 # from numpy.lib.histograms import histogram
 
 from Kernel import * # 导入后端
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 class HealthGuardian:
     WEATHER_API = "https://wis.qq.com/weather/common" # 天气 API （腾讯）
@@ -118,6 +124,7 @@ class HealthGuardian:
 
     def get_weather(self):
         """使用API获取天气"""
+        self.master.title("请等待，正在响应……")
         self.history['weather_info'] = {
             'province': self.province_entry.get(),
             'city': self.city_entry.get(),
@@ -146,6 +153,8 @@ class HealthGuardian:
         except Exception as e:
             messagebox.showerror("错误", f"获取天气失败：{str(e)}") # 弹窗显示错误
             print(traceback.format_exc()) # 打印详细错误
+        finally:
+            self.master.title("计算你的健康信息")
 
     def show_weather(self):
         """显示天气信息"""
@@ -173,6 +182,8 @@ class HealthGuardian:
                 raise ValueError(f"请填写完整的 {field} 信息")
 
             try:
+                if float(value) <= 0:
+                    raise ValueError(f"无效的{field}数值")
                 self.user_data[field] = float(value)
             except ValueError:
                 raise ValueError(f"无效的{field}数值")
@@ -183,14 +194,16 @@ class HealthGuardian:
     def analyze_health(self):
         """健康分析"""
         try:
+            self.master.title("请等待，正在响应……")
             self.get_weather()
             self.collect_data()
             report = self.generate_report()
             self.visualize_data(report)
-            # self.show_report(report)
         except Exception as e:
             messagebox.showerror("输入错误", str(e))
             print(traceback.format_exc()) # 打印详细错误
+        finally:
+            self.master.title("计算你的健康信息")
 
     def generate_report(self):
         """生成完整健康报告"""
@@ -343,6 +356,10 @@ class HealthGuardian:
                 command=lambda: report_window.destroy()).pack(side='right')
 
 if __name__ == "__main__":
+    root_path = resource_path("")
+    os.chdir(root_path)
+    print(f"sys: change work path to {root_path} successfully.")
+
     root = tk.Tk()
     app = HealthGuardian(root)
     root.mainloop()
