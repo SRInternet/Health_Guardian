@@ -7,6 +7,7 @@ Health Guardian - 智能健康守护者
 仓库地址: https://github.com/SRInternet/Health_Guardian
 """
 
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
@@ -185,8 +186,8 @@ class HealthGuardian:
             self.get_weather()
             self.collect_data()
             report = self.generate_report()
-            self.visualize_data()
-            self.show_report(report)
+            self.visualize_data(report)
+            # self.show_report(report)
         except Exception as e:
             messagebox.showerror("输入错误", str(e))
             print(traceback.format_exc()) # 打印详细错误
@@ -256,66 +257,90 @@ class HealthGuardian:
 
         return "，".join(advice) if advice else "天气适宜户外活动"
 
-    def visualize_data(self):
-        """创建可视化图表"""
+    def visualize_data(self, report):
+        """报告窗口"""
 
-        # 重要：使用支持中文的字体（已踩坑）
-        plt.rcParams['font.family'] = 'sans-serif'
-        plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial']
-
-        fig = plt.Figure(figsize=(8, 4), dpi=100)
-        ax = fig.add_subplot(111)
-
-        metrics = ['BMI指数', '运动量', '睡眠质量']  # 使用中文标签
-        values = [
-            self.user_data['weight'] / ((self.user_data['height'] / 100) ** 2),
-            min(self.user_data['steps'] / 10000 * 100, 120),  # 限制最大值
-            min(self.user_data['sleep'] / 8 * 100, 120)
-        ]
-
-        bars = ax.bar(metrics, values, color=['#2ecc71', '#3498db', '#9b59b6'])
-        ax.set_ylim(0, 120)
-        ax.set_ylabel('健康指数 (%)', fontproperties=get_font_prop(fm))
-        ax.set_title('健康数据可视化', fontproperties=get_font_prop(fm))
-
-        # 设置刻度标签字体
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
-            label.set_fontproperties(get_font_prop(fm))
-
-        # 添加数值标签
-        for bar in bars:
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2., height,
-                    f'{height:.1f}%', ha='center', va='bottom',
-                    fontproperties=get_font_prop(fm))
-
-        plt.tight_layout()
-
-        # 显示图表
-        chart_window = tk.Toplevel(self.master)
-        chart_window.title("您的健康水平")
-        chart_window.iconphoto(False, tk.PhotoImage(file='Dialog.png'))
-        canvas = FigureCanvasTkAgg(fig, master=chart_window)
-        canvas.draw()
-        canvas.get_tk_widget().pack()
-
-    def show_report(self, report):
-        """显示详细健康报告"""
+        # 创建报告窗口
         report_window = tk.Toplevel(self.master)
         report_window.title("健康分析报告")
+        report_window.geometry("800x620")
+        report_window.iconphoto(False, tk.PhotoImage(file='Dialog.png'))
+        
+        # 使用主题样式
+        style = ttk.Style()
+        style.configure('TNotebook', tabposition='n')
+        style.configure('TNotebook.Tab', padding=[15,5], font=('Microsoft YaHei', 10))
+        
+        # 创建标签页容器
+        notebook = ttk.Notebook(report_window)
+        notebook.pack(fill='both', expand=True, padx=10, pady=10)
 
+        """概览标签页"""
+        viz_frame = ttk.Frame(notebook)
+        notebook.add(viz_frame, text='📊 概览')
+        
+        # 创建图表
+        fig = plt.Figure(figsize=(8, 4), dpi=100, facecolor='#f8f9fa')
+        ax = fig.add_subplot(111)
+        
+        metrics = ['BMI指数', '运动量', '睡眠质量']
+        values = [
+            self.user_data['weight'] / (self.user_data['height']/100)**2,
+            min(self.user_data['steps']/10000*100, 120),
+            min(self.user_data['sleep']/8*100, 120)
+        ]
+        
+        bars = ax.bar(metrics, values, color=['#2ecc71', '#3498db', '#9b59b6'])
+        ax.set_facecolor('#f8f9fa')
+        ax.set_ylim(0, 120)
+        ax.set_ylabel('健康指数 (%)', fontproperties=get_font_prop(fm))
+        ax.set_title('您的健康数据概览', fontproperties=get_font_prop(fm), pad=20)
+        
+        # 设置字体
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontproperties(get_font_prop(fm))
+        
+        # 添加数据标签
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{height:.1f}%', ha='center', va='bottom',
+                    fontproperties=get_font_prop(fm))
+        
+        plt.tight_layout()
+        
+        # 嵌入图表
+        canvas = FigureCanvasTkAgg(fig, master=viz_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill='both', expand=True, padx=10, pady=10)
+        
+        """分析与建议标签页"""
+        text_frame = ttk.Frame(notebook)
+        notebook.add(text_frame, text='📝 分析与建议')
+        
+        # 报告内容
         report_text = (
-            f"【综合健康报告】\n"
-            f"BMI指数：{report['bmi']['value']} ({report['bmi']['category']})\n"
-            f"运动建议：{report['exercise']}\n"
-            f"睡眠评估：{report['mental_health']}\n"
-            f"天气提示：{report['weather_impact']}"
+            f"【综合健康报告】\n\n"
+            f"• BMI指数：{report['bmi']['value']} ({report['bmi']['category']})\n"
+            f"• 运动建议：{report['exercise']}\n"
+            f"• 睡眠评估：{report['mental_health']}\n"
+            f"• 天气提示：{report['weather_impact']}\n\n"
         )
-
-        text_area = tk.Text(report_window, width=50, height=10, wrap=tk.WORD)
+        
+        text_area = tk.Text(text_frame, wrap=tk.WORD, font=('Microsoft YaHei', 11),
+                        padx=15, pady=15, bg='#f8f9fa', relief='flat')
         text_area.insert(tk.END, report_text)
         text_area.config(state=tk.DISABLED)
-        text_area.pack(padx=10, pady=10)
+        text_area.pack(fill='both', expand=True)
+        
+        # 底部状态栏
+        status_bar = ttk.Frame(report_window)
+        status_bar.pack(fill='x', padx=5, pady=5)
+        ttk.Label(status_bar, 
+                text=f"报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                relief='sunken').pack(side='left')
+        ttk.Button(status_bar, text="完成", 
+                command=lambda: report_window.destroy()).pack(side='right')
 
 if __name__ == "__main__":
     root = tk.Tk()
