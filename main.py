@@ -1,7 +1,7 @@
 """
 Health Guardian - 智能健康守护者
 
-版本: 2.1  
+版本: 1.0
 许可证: MIT License  
 作者: 龚梓涵  
 仓库地址: https://github.com/SRInternet/Health_Guardian
