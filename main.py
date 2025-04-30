@@ -1,7 +1,7 @@
 """
 Health Guardian - 智能健康守护者
 
-版本: 1.0
+版本: 1.01
 许可证: MIT License  
 作者: 龚梓涵  
 仓库地址: https://github.com/SRInternet/Health_Guardian
@@ -18,11 +18,6 @@ import sys, os
 # from numpy.lib.histograms import histogram
 
 from Kernel import * # 导入后端
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
 
 class HealthGuardian:
     WEATHER_API = "https://wis.qq.com/weather/common" # 天气 API （腾讯）
@@ -45,7 +40,7 @@ class HealthGuardian:
         # 前端
         self.master = master
         master.title("计算你的健康信息")
-        master.iconphoto(True, tk.PhotoImage(file='UI.png'))
+        master.iconphoto(True, tk.PhotoImage(file=resource_path('UI.png')))
         self.create_ui()
         self.weather_data = None
         self.user_data = {}
@@ -60,6 +55,15 @@ class HealthGuardian:
         self.history = read_config()
         health_info = self.history['health_info']
         weather_info = self.history['weather_info']
+
+        # 创建顶部菜单栏
+        menubar = tk.Menu(self.master)
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="使用指南", command=self.show_help)
+        help_menu.add_command(label="关于", command=self.show_about)
+        menubar.add_cascade(label="帮助", menu=help_menu)
+
+        self.master.config(menu=menubar)
 
         # 健康数据输入
         input_frame = ttk.LabelFrame(main_frame, text="个人信息", padding=10)
@@ -121,7 +125,78 @@ class HealthGuardian:
         ttk.Button(btn_frame, text="获取天气", command=self.get_weather).pack(side='left', padx=5)
         ttk.Button(btn_frame, text="健康分析", command=self.analyze_health).pack(side='left', padx=5)
 
+    def show_about(self):
+        """显示关于窗口"""
+        about_window = tk.Toplevel(self.master)
+        about_window.title("关于 Health Guardian")
+        about_window.geometry("400x300")
+        about_window.resizable(False, False)
+        
+        header_frame = ttk.Frame(about_window)
+        header_frame.pack(fill='x', padx=10, pady=10)
+        
+        # 应用图标和名称
+        ttk.Label(header_frame, 
+                text="智能健康守护者",
+                # font=('Microsoft YaHei', 16, 'bold'),
+                foreground='#2c3e50').pack(pady=(10,5))
+        
+        # 版本信息
+        info_frame = ttk.Frame(about_window)
+        info_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        
+        infos = [
+            ("版本", "1.01 (Build 2025)"),
+            ("作者", "github.com/SRInternet"),
+            ("许可证", "MIT Open Source"),
+            ("联系我们", "169368309@qq.com")
+        ]
 
+        for label, value in infos:
+            row = ttk.Frame(info_frame)
+            row.pack(fill='x', pady=3)
+            ttk.Label(row, text=label+":", width=10, anchor='e').pack(side='left')
+            ttk.Label(row, text=value, anchor='w').pack(side='left', padx=5)
+        
+        # 版权信息
+        ttk.Label(about_window, 
+                text="© 2025 SRInternet. 保留所有权利",
+                # font=('Microsoft YaHei', 8),
+                foreground='#7f8c8d').pack(side='bottom', pady=10)
+        
+        # 关闭
+        btn_frame = ttk.Frame(about_window)
+        btn_frame.pack(side='bottom', pady=10)
+        ttk.Button(btn_frame, text="确定", 
+                command=about_window.destroy).pack()
+
+    def show_help(self):
+        """显示帮助窗口"""
+        help_text = """健康守护者使用指南
+
+    1. 填写您的个人信息
+    2. 输入所在位置获取天气
+    3. 点击"健康分析"生成报告
+
+    功能说明：
+    - BMI计算：评估体重状况
+    - 运动建议：根据步数给出建议
+    - 睡眠分析：评估睡眠质量
+    - 天气影响：提供环境适应建议"""
+        
+        help_window = tk.Toplevel(self.master)
+        help_window.title("使用帮助")
+        help_window.geometry("500x400")
+        
+        text = tk.Text(help_window, wrap=tk.WORD, padx=15, pady=15)
+                    # font=('Microsoft YaHei', 10))
+        text.insert(tk.END, help_text)
+        text.config(state=tk.DISABLED)
+        text.pack(fill='both', expand=True)
+        
+        ttk.Button(help_window, text="关闭", 
+                command=help_window.destroy).pack(pady=10)
+        
     def get_weather(self):
         """使用API获取天气"""
         self.master.title("请等待，正在响应……")
@@ -277,7 +352,7 @@ class HealthGuardian:
         report_window = tk.Toplevel(self.master)
         report_window.title("健康分析报告")
         report_window.geometry("800x620")
-        report_window.iconphoto(False, tk.PhotoImage(file='Dialog.png'))
+        report_window.iconphoto(False, tk.PhotoImage(file=resource_path('Dialog.png')))
         
         # 使用主题样式
         style = ttk.Style()
@@ -356,7 +431,7 @@ class HealthGuardian:
                 command=lambda: report_window.destroy()).pack(side='right')
 
 if __name__ == "__main__":
-    root_path = resource_path("")
+    root_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.chdir(root_path)
     print(f"sys: change work path to {root_path} successfully.")
 

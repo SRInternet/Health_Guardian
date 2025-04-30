@@ -1,7 +1,11 @@
 # 后端
-import os
+import os, sys
 import traceback
 
+def resource_path(relative_path): # pyinstaller necessary
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, "assets", relative_path)
 
 # 字体
 def setup_fonts(plt, fm):
@@ -12,7 +16,7 @@ def setup_fonts(plt, fm):
         plt.rcParams['axes.unicode_minus'] = False
 
         # 检查并使用指定的字体
-        local_font = "Text.ttf"
+        local_font = resource_path("Text.ttf")
         if os.path.exists(local_font):
             font_path = local_font
             font_prop = fm.FontProperties(fname=font_path)
@@ -25,7 +29,7 @@ def setup_fonts(plt, fm):
 def get_font_prop(fm):
     """获取字体的属性"""
     try:
-        local_font = "Text.ttf" # 指定的字体
+        local_font = resource_path("Text.ttf") # 指定的字体
         if os.path.exists(local_font):
             return fm.FontProperties(fname=local_font)
         return fm.FontProperties(family='Microsoft YaHei') # 如果用户不小心删了字体再使用【微软雅黑】

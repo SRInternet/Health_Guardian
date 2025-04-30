@@ -1,2 +1,5 @@
 history.json
 setup.json
+output
+.vscode
+__pycache__

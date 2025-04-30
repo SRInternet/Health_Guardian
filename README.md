@@ -65,7 +65,7 @@
 pip install requests matplotlib
 
 # 字体配置
-cp Text.ttf ~/.fonts/  # Linux/macOS neccessary
+cp assets/Text.ttf ~/.fonts/  # Linux/macOS neccessary
 ```
 
 ### 使用指南
